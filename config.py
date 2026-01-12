@@ -6,4 +6,4 @@ N_FFT = 2048         # Frequency res
 HOP_LENGTH = 512     # Time res
 
 # Output
-OUTPUT_FILENAME = "output.wav"
+OUTPUT_FILENAME = "output-test2.wav"
