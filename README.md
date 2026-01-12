@@ -1,4 +1,4 @@
-# spectral-analyzer
+# Spectral-Analyzer
 I know some great developers have already built audio spectral viewers, but I wanna build one step by step....
 
 # How to run it
