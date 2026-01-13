@@ -48,6 +48,12 @@ class AnalyzerTab(ctk.CTkFrame):
         
         self.lbl_time = ctk.CTkLabel(controls, text="0:00 / 0:00")
         self.lbl_time.pack(side="left", padx=15)
+
+        ## Export Image
+        self.btn_export = ctk.CTkButton(controls, text="Save Image", state="disabled",
+                                       command=self.save_spectrogram_image, width=100,
+                                       fg_color="#E59400", text_color="black") 
+        self.btn_export.pack(side="left", padx=5)
         
         # Color Map Selector
         ctk.CTkLabel(controls, text="Color:").pack(side="right", padx=5)
@@ -94,6 +100,7 @@ class AnalyzerTab(ctk.CTkFrame):
             if success:
                 self.duration = dur
                 self.btn_play.configure(state="normal")
+                self.btn_export.configure(state="normal") # load export button on success
                 self.lbl_time.configure(text=f"0:00 / {self.format_time(self.duration)}")
                 self.draw_spectrogram()
             else:
@@ -141,6 +148,8 @@ class AnalyzerTab(ctk.CTkFrame):
             self.is_playing = True
             self.btn_play.configure(text="Stop", fg_color="red")
             self.btn_load.configure(state="disabled")
+
+            self.btn_export.configure(state="disabled") # disable export on play
             
             self.start_time = time.time()
             
@@ -157,6 +166,32 @@ class AnalyzerTab(ctk.CTkFrame):
             self.player.stop_file() # switched to stop_file
             self.btn_play.configure(text="Play", fg_color="#1f6aa5") # restore blue color
             self.btn_load.configure(state="normal")
+            self.btn_export.configure(state="normal") # enable export on stop
+
+    def save_spectrogram_image(self):
+            # render the current view of the canvas to a file
+            if self.analyzer.S_db is None:
+                return
+                
+            file_path = filedialog.asksaveasfilename(
+                defaultextension=".png",
+                filetypes=[("PNG Image", "*.png"), ("JPEG Image", "*.jpg")],
+                title="Export Spectrogram"
+            )
+            
+            if file_path:
+                try:
+                    # Save the matplotlib figure directly
+                    # facecolor matches the background so it looks seamless
+                    self.figure.savefig(
+                        file_path, 
+                        facecolor='#1a1a1a', 
+                        bbox_inches='tight', 
+                        pad_inches=0.1
+                    )
+                    print(f"Saved image to {file_path}")
+                except Exception as e:
+                    print(f"Error saving image: {e}")
 
     def run_audio(self):
         # use pygame to play the file instead (better performance)
@@ -175,6 +210,7 @@ class AnalyzerTab(ctk.CTkFrame):
         # use after to update UI from thread safely
         self.after(0, lambda: self.btn_play.configure(text="Play", fg_color="#1f6aa5"))
         self.after(0, lambda: self.btn_load.configure(state="normal"))
+        self.after(0, lambda: self.btn_export.configure(state="normal")) # enable export
 
     def update_view_loop(self):
         if self.is_playing and self.ax:
