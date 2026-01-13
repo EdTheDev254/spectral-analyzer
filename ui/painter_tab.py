@@ -7,7 +7,7 @@ import os
 # backend logic
 from audio.generator import AudioGenerator
 from audio.player import AudioPlayer
-from config import COLOR_BG, COLOR_ACCENT, OUTPUT_FILENAME
+from config import COLOR_BG, COLOR_ACCENT, OUTPUT_FILENAME, CANVAS_SIZE
 
 class PainterTab(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -20,8 +20,8 @@ class PainterTab(ctk.CTkFrame):
 
         self.last_x = None
         self.last_y = None
-        self.canvas_width = 600
-        self.canvas_height = 400
+        self.canvas_width = CANVAS_SIZE
+        self.canvas_height = CANVAS_SIZE
 
 
         # This is what gets sent to the audio generator

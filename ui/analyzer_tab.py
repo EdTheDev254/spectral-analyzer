@@ -18,6 +18,8 @@ class AnalyzerTab(ctk.CTkFrame):
         self.analyzer = AudioAnalyzer()
         self.player = AudioPlayer()
 
+        self.hide_axis_var = ctk.BooleanVar(value=False) # track hide axis
+
         self.is_playing = False
         self.start_time = 0
         self.duration = 0
@@ -61,6 +63,13 @@ class AnalyzerTab(ctk.CTkFrame):
         self.combo_cmap = ctk.CTkComboBox(controls, values=["inferno", "magma", "plasma", "viridis"],
                                          variable=self.cmap_var, command=self.redraw_map, width=100)
         self.combo_cmap.pack(side="right", padx=5)
+
+        # Hide Axis from export
+        self.chk_axis = ctk.CTkCheckBox(controls, text="Hide Axes", 
+                                        variable=self.hide_axis_var, 
+                                        command=lambda: self.redraw_map(None),
+                                        width=20)
+        self.chk_axis.pack(side="right", padx=10)
 
         # The Graph Container
         # We use a standard Frame to hold the matplotlib canvas 
@@ -121,6 +130,16 @@ class AnalyzerTab(ctk.CTkFrame):
             ax=self.ax, cmap=self.cmap_var.get(),
             rasterized=True
         )
+
+        # Hide or show axis during export
+        if self.hide_axis_var.get():
+            self.ax.axis('off') # Hides all numbers and ticks
+        else:
+            self.ax.axis('on')
+            self.ax.set_facecolor('black')
+            self.ax.tick_params(colors='white', labelsize=8)
+            self.ax.xaxis.label.set_color('white')
+            self.ax.yaxis.label.set_color('white')
         
         # Styling the graph
         self.ax.set_facecolor('black')

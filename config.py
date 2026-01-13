@@ -4,6 +4,7 @@ import os
 SAMPLE_RATE = 44100
 N_FFT = 2048         # Frequency res
 HOP_LENGTH = 512     # Time res
+CANVAS_SIZE = 1024
 
 # Output
 OUTPUT_FILENAME = "output-test2.wav"
