@@ -9,7 +9,7 @@ import librosa.display
 
 from audio.analyzer import AudioAnalyzer
 from audio.player import AudioPlayer
-from config import COLOR_BG, WINDOW_SIZE, HOP_LENGTH
+from config import COLOR_BG, WINDOW_SIZE, HOP_LENGTH, CANVAS_SIZE, EXPORT_DIMENSIONS
 
 class AnalyzerTab(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -199,18 +199,34 @@ class AnalyzerTab(ctk.CTkFrame):
             )
             
             if file_path:
+                original_size = self.figure.get_size_inches()
+
                 try:
+                    # USE SHARED DIMENSIONS
+                    # Get the w/h from the config dictionary
+                    target_w = EXPORT_DIMENSIONS['w']
+                    target_h = EXPORT_DIMENSIONS['h']
+
+                    # Convert pixels to inches (assuming 100 DPI)
+                    self.figure.set_size_inches(target_w / 100, target_h / 100)
+                    # force the figure to be the same size as the canvas
+
                     # Save the matplotlib figure directly
                     # facecolor matches the background so it looks seamless
                     self.figure.savefig(
-                        file_path, 
+                        file_path,
+                        dpi=100,
                         facecolor='#1a1a1a', 
                         bbox_inches='tight', 
-                        pad_inches=0.1
+                        pad_inches=0
                     )
-                    print(f"Saved image to {file_path}")
+                    print(f"Saved image to {file_path} ({target_w}x{target_h})")
                 except Exception as e:
                     print(f"Error saving image: {e}")
+
+                # restore the figure to fit the UI again
+                self.figure.set_size_inches(original_size)
+                self.canvas.draw_idle()
 
     def run_audio(self):
         # use pygame to play the file instead (better performance)

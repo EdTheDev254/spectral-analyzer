@@ -4,7 +4,14 @@ import os
 SAMPLE_RATE = 44100
 N_FFT = 2048         # Frequency res
 HOP_LENGTH = 512     # Time res
+HOP_LENGTH_HD = 128 # 4x higher time resolution
+
 CANVAS_SIZE = 1024
+
+# Shared memory for export resolution
+# We use a dictionary so both tabs can modify/read the same object
+EXPORT_DIMENSIONS = {'w': CANVAS_SIZE, 'h': CANVAS_SIZE}
+
 
 # Output
 OUTPUT_FILENAME = "output-test2.wav"

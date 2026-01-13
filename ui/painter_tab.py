@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import filedialog
 import customtkinter as ctk
 from PIL import Image, ImageDraw, ImageTk
 import threading
@@ -7,7 +8,7 @@ import os
 # backend logic
 from audio.generator import AudioGenerator
 from audio.player import AudioPlayer
-from config import COLOR_BG, COLOR_ACCENT, OUTPUT_FILENAME, CANVAS_SIZE
+from config import COLOR_BG, COLOR_ACCENT, OUTPUT_FILENAME, CANVAS_SIZE, EXPORT_DIMENSIONS
 
 class PainterTab(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -54,21 +55,28 @@ class PainterTab(ctk.CTkFrame):
         self.draw_canvas.bind("<ButtonRelease-1>", self.stop_paint)
 
         # Canvas Tools
-        tools_frame = ctk.CTkFrame(left_frame, fg_color="transparent")
-        tools_frame.pack(pady=10, fill="x", padx=20)
+        # RIGHT SIDE: Controls
+        right_frame = ctk.CTkFrame(self)
+        right_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+
+        #MOVED TOOLS TO RIGHT FRAME
+        tools_frame = ctk.CTkFrame(right_frame, fg_color="transparent")
+        tools_frame.pack(pady=10, fill="x", padx=10)
 
         self.btn_clear = ctk.CTkButton(tools_frame, text="Clear Canvas", fg_color="#cf3636", 
                                        command=self.clear_canvas)
-        self.btn_clear.pack(side="left", padx=10, expand=True)
+        self.btn_clear.pack(pady=5, fill="x")
 
-        ctk.CTkLabel(tools_frame, text="Brush Size:").pack(side="left", padx=5)
+        self.btn_load = ctk.CTkButton(tools_frame, text="Load Image", fg_color="#E59400", 
+                                      text_color="black", command=self.load_image)
+        self.btn_load.pack(pady=5, fill="x")
+
+        ctk.CTkLabel(tools_frame, text="Brush Size:").pack(pady=(10,0))
         self.slider_brush = ctk.CTkSlider(tools_frame, from_=1, to=30, number_of_steps=29)
         self.slider_brush.set(10)
-        self.slider_brush.pack(side="left", padx=5)
+        self.slider_brush.pack(pady=5)
 
-        # The Controls
-        right_frame = ctk.CTkFrame(self)
-        right_frame.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
+        #----------------------------
 
         ctk.CTkLabel(right_frame, text="Settings", font=("Arial", 16, "bold")).pack(pady=10)
 
@@ -129,12 +137,64 @@ class PainterTab(ctk.CTkFrame):
         self.last_x = None
         self.last_y = None
 
+
+    def load_image(self):
+            file_path = filedialog.askopenfilename(
+                filetypes=[("Images", "*.png *.jpg *.jpeg *.bmp")]
+            )
+
+            if file_path:
+                # open the image and convert to grayscale
+                loaded_img = Image.open(file_path).convert('L')
+                
+                # limit max dimension to 1000px to prevent UI from getting too big
+                max_limit = 1000
+                if loaded_img.width > max_limit or loaded_img.height > max_limit:
+                    loaded_img.thumbnail((max_limit, max_limit), Image.Resampling.LANCZOS)
+
+                
+                w, h = loaded_img.size
+
+                # update canvas dimensions
+                self.canvas_width = w
+                self.canvas_height = h
+                
+                # Shared memory
+                EXPORT_DIMENSIONS['w'] = w
+                EXPORT_DIMENSIONS['h'] = h
+                # ----------------------------########
+
+                # resize the visible tkinter canvas so it fits the image
+                self.draw_canvas.configure(width=w, height=h)
+                
+                # update internal logic
+                self.image = loaded_img
+                self.draw = ImageDraw.Draw(self.image)
+                
+                # display on screen
+                self.tk_image_ref = ImageTk.PhotoImage(loaded_img)
+                self.draw_canvas.create_image(0, 0, image=self.tk_image_ref, anchor="nw")
+                self.status_label.configure(text=f"Loaded image: {w}x{h}")
+
     def clear_canvas(self):
         self.draw_canvas.delete("all")
+
+        # reset to default size
+        self.canvas_width = CANVAS_SIZE
+        self.canvas_height = CANVAS_SIZE
+        
+        # reset shared mem
+        EXPORT_DIMENSIONS['w'] = CANVAS_SIZE
+        EXPORT_DIMENSIONS['h'] = CANVAS_SIZE
+        # ---------------------------
+
         # Reset the PIL image to black
+        self.draw_canvas.configure(width=self.canvas_width, height=self.canvas_height)
         self.image = Image.new("L", (self.canvas_width, self.canvas_height), "black")
         self.draw = ImageDraw.Draw(self.image)
+        self.tk_image_ref = None
         self.btn_play.configure(state="disabled")
+        self.status_label.configure(text="Canvas cleared")
 
     def update_labels(self, value):
         d = int(self.slider_duration.get())
