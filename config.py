@@ -7,3 +7,13 @@ HOP_LENGTH = 512     # Time res
 
 # Output
 OUTPUT_FILENAME = "output-test2.wav"
+
+
+# Colors
+COLOR_BG = "#10002b"       
+COLOR_ACCENT = "#ffcc00"
+COLOR_TEXT = "white"
+
+# ANALYZER SETTINGS
+# How many seconds of audio to show on screen
+WINDOW_SIZE = 3.0
