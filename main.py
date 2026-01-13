@@ -22,3 +22,7 @@ if __name__ == "__main__":
     app.protocol("WM_DELETE_WINDOW", app.on_closing)
     
     app.mainloop()
+
+
+# side not, use 3 seconds audio because you will be dividing the image pixels by 3
+# since it is 600x600 pixels() you will get a much crisper spectrogram audio using the visualizer

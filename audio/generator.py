@@ -28,7 +28,8 @@ class AudioGenerator:
             print(f"Resizing internal image to: {frames_needed}x{freq_bins}")
             
             # Resize image to fit audio dimensions (BICUBIC is much smooth)
-            resized_img = original_img.resize((frames_needed, freq_bins), Image.Resampling.BICUBIC)
+            # Use LANCZOS here because it handles the "stretching" of long audio better than Bicubic
+            resized_img = original_img.resize((frames_needed, freq_bins), Image.Resampling.LANCZOS)
             
             # then we flip the image
             # Because in images; (0,0) is Top-Left and in Audio; (0,0) is Bottom-Left (Low Freq). 
@@ -41,7 +42,8 @@ class AudioGenerator:
             
             #Apply some contrast (Cube the values) why do we do this?
              # This makes the black background truly silent and lines clearer
-            spectrogram = np.power(spectrogram, 3) * 100
+            # Changed to 4 to remove the "blur" noise from stretching longer audio
+            spectrogram = np.power(spectrogram, 4) * 100
 
             # We use Griffin-Lim Algorithm that was something I just encountered becuase of this audio generator project.
             # Converts Spectrogram (Frequency Map) -> Waveform (Audio)

@@ -111,7 +111,8 @@ class AnalyzerTab(ctk.CTkFrame):
             S_db, sr=sr, 
             hop_length=HOP_LENGTH,
             x_axis='time', y_axis='hz',
-            ax=self.ax, cmap=self.cmap_var.get()
+            ax=self.ax, cmap=self.cmap_var.get(),
+            rasterized=True
         )
         
         # Styling the graph
@@ -190,7 +191,7 @@ class AnalyzerTab(ctk.CTkFrame):
                 self.lbl_time.configure(text=f"{self.format_time(elapsed)} / {self.format_time(self.duration)}")
                 
                 # call this function again in 100ms (slowed down slightly for performance)
-                self.after(100, self.update_view_loop)
+                self.after(30, self.update_view_loop)
             else:
                 # Reset view when done
                 self.ax.set_xlim(0, WINDOW_SIZE)
