@@ -5,7 +5,7 @@ class AudioPlayer:
     def __init__(self):
         # pre_init helps reduce the delay when you press play
         try:
-            pygame.mixer.pre_init(44100, -16, 2, 512)
+            pygame.mixer.pre_init(44100, -16, 2, 4096)
             pygame.mixer.init()
             pygame.init()
         except Exception as e:
