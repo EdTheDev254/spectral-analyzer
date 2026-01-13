@@ -6,30 +6,28 @@ import librosa
 from config import SAMPLE_RATE, N_FFT, HOP_LENGTH, OUTPUT_FILENAME
 
 class AudioGenerator:
-    def generate(self, image_path, duration_seconds=3.0, iterations=32):
+    def generate_from_image(self, pil_image, duration_seconds=3.0, iterations=32):
         """
-        .Load the image.
-        .Resizes it to match the requested audio duration.
-        .Performs Inverse FFT to turn pixels into sound.
-        .Saves the file.
+        Takes a PIL Image object directly (from the painter tab),
+        converts it to audio, and saves it.
         """
         # I am becoming obsessed with the try:except block
         try:
-            print(f"--- Loading Image: {image_path} ---")
+            print(f"--- Generating Audio ({duration_seconds}s) ---")
             
-            # Load and convert to Grayscale
-            original_img = Image.open(image_path).convert('L')
+            # We don't need Image.open() here because we received the image object directly
+            # Just ensure it is grayscale
+            original_img = pil_image.convert('L')
             
             # dimensions needed for audio math
-
             frames_needed = int((duration_seconds * SAMPLE_RATE) / HOP_LENGTH)
+            
             # Height = Frequency Bins (1025 for n_fft=2048)
-
             freq_bins = int(N_FFT / 2) + 1
             
-            print(f"Resizing image to: {frames_needed}x{freq_bins} pixels")
+            print(f"Resizing internal image to: {frames_needed}x{freq_bins}")
             
-            #Resize image to fit audio dimensions (BICUBIC is much smooth)
+            # Resize image to fit audio dimensions (BICUBIC is much smooth)
             resized_img = original_img.resize((frames_needed, freq_bins), Image.Resampling.BICUBIC)
             
             # then we flip the image
@@ -58,8 +56,9 @@ class AudioGenerator:
             sf.write(OUTPUT_FILENAME, audio_signal, SAMPLE_RATE)
             print(f"Success! Saved to {OUTPUT_FILENAME}")
             
+            return OUTPUT_FILENAME, audio_signal
+            
         except Exception as e:
             print(f"Error: {e}")
 
-            # i gotta go play no man's sky,..... hehe
-
+            return None, None
