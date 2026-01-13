@@ -144,6 +144,9 @@ class PainterTab(ctk.CTkFrame):
 
     # logic for the sound
     def start_generation(self):
+        # force the player to release the file lock before we overwrite it // fix the error after stpoing for new drawing
+        self.player.stop_file()
+
         # thread running to avoid freezing
         self.btn_convert.configure(state="disabled", text="Computing...")
         self.status_label.configure(text="Generating audio...")

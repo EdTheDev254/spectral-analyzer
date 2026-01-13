@@ -20,7 +20,7 @@ class AudioPlayer:
 
     def stop_file(self):
         pygame.mixer.music.stop()
-        pygame.mixer.music.unload()
+        pygame.mixer.music.unload() #for unloading the file when it is finished
 
     def is_file_playing(self):
         return pygame.mixer.music.get_busy()
