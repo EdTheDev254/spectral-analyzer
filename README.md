@@ -3,13 +3,25 @@ I know some great developers have already built audio spectral viewers, but I wa
 
 # How to run it
 
-At the moment before the UI update(still working on it)
-
 ```
 python main.py 
 
-#this will create an audio version of your image
 ```
+
+# Sample
+
+## Original Image
+![Alt Text](car.jpg)
+
+## Source Audio
+<audio controls>
+  <source src="output-test2.wav" type="audio/mpeg">
+</audio>
+
+## Spectogram View(Viridis)
+![Alt Text](test.png)
+
+The original Beetle photo was converted to audio by mapping pixel brightness to frequencies. Each part of the image produces sound at different frequencies over time. The audio was then analyzed as a spectrogram using the same program, which shows frequency on the vertical axis and time on the horizontal axis. Since the image data was encoded as frequencies, viewing them in a spectrogram shows the Beetle's shape again.(it is not perfect, but it can be seen)
 
 # Reverse(Audio to Image-spectrogram)
 This uses Matplotlib to show the spectrum from the audio.
