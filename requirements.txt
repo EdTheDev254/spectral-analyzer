@@ -4,3 +4,4 @@ soundfile
 Pillow
 sounddevice
 pygame
+matplotlib
