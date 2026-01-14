@@ -4,7 +4,7 @@ import os
 SAMPLE_RATE = 44100
 N_FFT = 2048         # Frequency res
 HOP_LENGTH = 512     # Time res
-HOP_LENGTH_HD = 128 # 4x higher time resolution
+HOP_LENGTH_HD = 64 # 4x higher time resolution
 
 CANVAS_SIZE = 1024
 

@@ -9,7 +9,7 @@ import librosa.display
 
 from audio.analyzer import AudioAnalyzer
 from audio.player import AudioPlayer
-from config import COLOR_BG, WINDOW_SIZE, HOP_LENGTH, CANVAS_SIZE, EXPORT_DIMENSIONS
+from config import COLOR_BG, WINDOW_SIZE, HOP_LENGTH, HOP_LENGTH_HD, CANVAS_SIZE, EXPORT_DIMENSIONS
 
 class AnalyzerTab(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
@@ -19,6 +19,9 @@ class AnalyzerTab(ctk.CTkFrame):
         self.player = AudioPlayer()
 
         self.hide_axis_var = ctk.BooleanVar(value=False) # track hide axis
+        self.high_res_var = ctk.BooleanVar(value=False) # track high res
+
+        self.current_hop = HOP_LENGTH # track which resolution we are using
 
         self.is_playing = False
         self.start_time = 0
@@ -71,6 +74,14 @@ class AnalyzerTab(ctk.CTkFrame):
                                         width=20)
         self.chk_axis.pack(side="right", padx=10)
 
+
+        # High Res Checkbox
+        self.chk_hires = ctk.CTkCheckBox(controls, text="High Res", 
+                                        variable=self.high_res_var, 
+                                        command=self.toggle_resolution,
+                                        width=20)
+        self.chk_hires.pack(side="right", padx=10)
+
         # The Graph Container
         # We use a standard Frame to hold the matplotlib canvas 
         self.plot_frame = ctk.CTkFrame(self, fg_color="black")
@@ -115,6 +126,7 @@ class AnalyzerTab(ctk.CTkFrame):
             else:
                 self.lbl_time.configure(text="Error loading file")
 
+
     def draw_spectrogram(self):
         # Get data from the backend
         S_db, sr = self.analyzer.get_spectrogram_data()
@@ -123,37 +135,32 @@ class AnalyzerTab(ctk.CTkFrame):
         self.ax = self.figure.add_subplot(111)
         
         # Draw the spectogram heatmap
+        # rasterized=True makes drawing much faster on laggy computers
         img = librosa.display.specshow(
             S_db, sr=sr, 
-            hop_length=HOP_LENGTH,
+            hop_length=self.current_hop,
             x_axis='time', y_axis='hz',
             ax=self.ax, cmap=self.cmap_var.get(),
             rasterized=True
         )
-
-        # Hide or show axis during export
+        
+        # Check if we should hide the numbers on the graph
         if self.hide_axis_var.get():
-            self.ax.axis('off') # Hides all numbers and ticks
+            self.ax.axis('off')
         else:
             self.ax.axis('on')
+            # Styling the graph
             self.ax.set_facecolor('black')
             self.ax.tick_params(colors='white', labelsize=8)
             self.ax.xaxis.label.set_color('white')
             self.ax.yaxis.label.set_color('white')
         
-        # Styling the graph
-        self.ax.set_facecolor('black')
-        self.ax.tick_params(colors='white', labelsize=8)
-        self.ax.xaxis.label.set_color('white')
-        self.ax.yaxis.label.set_color('white')
-        
-        # Set initial view (scroll to start)
-
-
+        # Set initial view 
         self.ax.set_xlim(0, WINDOW_SIZE)
         
         self.figure.tight_layout()
         self.canvas.draw()
+
 
     def redraw_map(self, _):
         if self.analyzer.S_db is not None:
@@ -186,6 +193,19 @@ class AnalyzerTab(ctk.CTkFrame):
             self.btn_play.configure(text="Play", fg_color="#1f6aa5") # restore blue color
             self.btn_load.configure(state="normal")
             self.btn_export.configure(state="normal") # enable export on stop
+
+    
+    def toggle_resolution(self):
+        # Triggered when the High Res box is clicked
+        if self.analyzer.audio_data is None:
+            return
+            
+        # recalculate spectrogram
+        is_hd = self.high_res_var.get()
+        self.current_hop = self.analyzer.recompute_spectrogram(high_res=is_hd)
+        
+        # redraw with new data
+        self.draw_spectrogram()
 
     def save_spectrogram_image(self):
             # render the current view of the canvas to a file
