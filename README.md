@@ -14,9 +14,7 @@ python main.py
 ![Alt Text](car.jpg)
 
 ## Source Audio
-<audio controls>
-  <source src="output-test2.wav" type="audio/mpeg">
-</audio>
+[Listen Audio](output-test2.wav)
 
 ## Spectogram View(Viridis)
 ![Alt Text](test.png)
