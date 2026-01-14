@@ -20,6 +20,7 @@ class AnalyzerTab(ctk.CTkFrame):
 
         self.hide_axis_var = ctk.BooleanVar(value=False) # track hide axis
         self.high_res_var = ctk.BooleanVar(value=False) # track high res
+        self.log_scale_var = ctk.BooleanVar(value=False) # track log scale
 
         self.current_hop = HOP_LENGTH # track which resolution we are using
 
@@ -73,6 +74,13 @@ class AnalyzerTab(ctk.CTkFrame):
                                         command=lambda: self.redraw_map(None),
                                         width=20)
         self.chk_axis.pack(side="right", padx=10)
+
+        # Log Scale Checkbox
+        self.chk_log = ctk.CTkCheckBox(controls, text="Log Scale", 
+                                        variable=self.log_scale_var, 
+                                        command=lambda: self.redraw_map(None),
+                                        width=20)
+        self.chk_log.pack(side="right", padx=10)
 
 
         # High Res Checkbox
@@ -133,13 +141,16 @@ class AnalyzerTab(ctk.CTkFrame):
         
         self.figure.clear()
         self.ax = self.figure.add_subplot(111)
+
+        # Set the axis type based on the checkbox
+        y_axis_type = 'log' if self.log_scale_var.get() else 'hz'
         
         # Draw the spectogram heatmap
         # rasterized=True makes drawing much faster on laggy computers
         img = librosa.display.specshow(
             S_db, sr=sr, 
             hop_length=self.current_hop,
-            x_axis='time', y_axis='hz',
+            x_axis='time', y_axis=y_axis_type,
             ax=self.ax, cmap=self.cmap_var.get(),
             rasterized=True
         )
