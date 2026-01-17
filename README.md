@@ -21,12 +21,7 @@ python main.py
 
 The original Beetle photo was converted to audio by mapping pixel brightness to frequencies. Each part of the image produces sound at different frequencies over time. The audio was then analyzed as a spectrogram using the same program, which shows frequency on the vertical axis and time on the horizontal axis. Since the image data was encoded as frequencies, viewing them in a spectrogram shows the Beetle's shape again.(it is not perfect, but it can be seen)
 
-# Reverse(Audio to Image-spectrogram)
-This uses Matplotlib to show the spectrum from the audio.
 
-```
-python test-visual.py
-```
 
 
 

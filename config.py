@@ -18,7 +18,7 @@ OUTPUT_FILENAME = "output-test2.wav"
 
 
 # Colors
-COLOR_BG = "#10002b"       
+COLOR_BG = "#000000"       
 COLOR_ACCENT = "#ffcc00"
 COLOR_TEXT = "white"
 
