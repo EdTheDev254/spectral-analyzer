@@ -5,3 +5,5 @@ Pillow
 sounddevice
 pygame
 matplotlib
+customtkinter
+scipy
