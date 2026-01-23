@@ -27,6 +27,7 @@ class SpectralStudio(ctk.CTk):
         
         self.tab_paint_ref = self.tabview.add("Spectral Painter")
         self.tab_analyze_ref = self.tabview.add("Spectral Analyzer")
+        # self.tab_scroll_ref = self.tabview.add("Scrollable View")
         
         # initialize the painter tab script
         self.painter = PainterTab(master=self.tab_paint_ref)

@@ -22,7 +22,14 @@ class AudioPlayer:
         pygame.mixer.music.stop()
         pygame.mixer.music.unload() #for unloading the file when it is finished
 
+    def pause_file(self):
+        pygame.mixer.music.pause()
+
+    def unpause_file(self):
+        pygame.mixer.music.unpause()
+
     def is_file_playing(self):
+        # Returns true if music is playing OR paused
         return pygame.mixer.music.get_busy()
 
     def play_array(self, audio_data, sample_rate, start_sample=0):

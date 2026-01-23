@@ -23,6 +23,7 @@ class PainterTab(ctk.CTkFrame):
         self.last_y = None
         self.canvas_width = CANVAS_SIZE
         self.canvas_height = CANVAS_SIZE
+        self.generated_file_path = None
 
 
         # This is what gets sent to the audio generator
@@ -204,8 +205,19 @@ class PainterTab(ctk.CTkFrame):
 
     # logic for the sound
     def start_generation(self):
-        # force the player to release the file lock before we overwrite it // fix the error after stpoing for new drawing
+        # Stop any playback
         self.player.stop_file()
+
+        # Ask where to save
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".wav",
+            initialfile="generated_audio.wav",
+            filetypes=[("WAV Audio", "*.wav")],
+            title="Save Generated Audio"
+        )
+        
+        if not file_path:
+            return
 
         # thread running to avoid freezing
         self.btn_convert.configure(state="disabled", text="Computing...")
@@ -214,13 +226,13 @@ class PainterTab(ctk.CTkFrame):
         duration = int(self.slider_duration.get())
         iterations = int(self.slider_quality.get())
         
-        thread = threading.Thread(target=self.run_generation, args=(duration, iterations))
+        thread = threading.Thread(target=self.run_generation, args=(duration, iterations, file_path))
         thread.start()
 
-    def run_generation(self, duration, iterations):
+    def run_generation(self, duration, iterations, output_path):
         # Call the backend generator
         # We pass self.image, which is the Pillow object we drew on
-        filename, _ = self.generator.generate_from_image(self.image, duration, iterations)
+        filename, _ = self.generator.generate_from_image(self.image, duration, iterations, output_path)
         
         self.after(0, self.finish_generation, filename)
 
@@ -228,14 +240,15 @@ class PainterTab(ctk.CTkFrame):
         self.btn_convert.configure(state="normal", text="GENERATE AUDIO")
         
         if filename:
-            self.status_label.configure(text="Generation Complete!")
+            self.generated_file_path = filename
+            self.status_label.configure(text=f"Saved to: {os.path.basename(filename)}")
             self.btn_play.configure(state="normal")
         else:
             self.status_label.configure(text="Error generating audio.")
 
     def play_audio(self):
-        if os.path.exists(OUTPUT_FILENAME):
-            self.player.play_file(OUTPUT_FILENAME)
+        if self.generated_file_path and os.path.exists(self.generated_file_path):
+            self.player.play_file(self.generated_file_path)
 
 
             

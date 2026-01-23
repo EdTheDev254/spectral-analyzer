@@ -6,7 +6,7 @@ import librosa
 from config import SAMPLE_RATE, N_FFT, HOP_LENGTH, OUTPUT_FILENAME
 
 class AudioGenerator:
-    def generate_from_image(self, pil_image, duration_seconds=3.0, iterations=32):
+    def generate_from_image(self, pil_image, duration_seconds=3.0, iterations=32, output_path=None):
         """
         Takes a PIL Image object directly (from the painter tab),
         converts it to audio, and saves it.
@@ -55,10 +55,11 @@ class AudioGenerator:
                 n_fft=N_FFT
             )
 
-            sf.write(OUTPUT_FILENAME, audio_signal, SAMPLE_RATE)
-            print(f"Success! Saved to {OUTPUT_FILENAME}")
+            target_file = output_path if output_path else OUTPUT_FILENAME
+            sf.write(target_file, audio_signal, SAMPLE_RATE)
+            print(f"Success! Saved to {target_file}")
             
-            return OUTPUT_FILENAME, audio_signal
+            return target_file, audio_signal
             
         except Exception as e:
             print(f"Error: {e}")
