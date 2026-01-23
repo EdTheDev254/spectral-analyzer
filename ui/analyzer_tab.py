@@ -319,87 +319,85 @@ class AnalyzerTab(ctk.CTkFrame):
         self.generate_spectrogram_image()
 
     def save_spectrogram_image(self):
-            # render the current view of the canvas to a file
-            if self.analyzer.S_db is None:
-                return
-                
-            # Default filename from loaded audio
-            default_name = "spectrogram"
-            if self.current_file_path:
-                import os
-                base = os.path.basename(self.current_file_path)
-                name, _ = os.path.splitext(base)
-                default_name = f"{name}_spectrogram"
-
-            file_path = filedialog.asksaveasfilename(
-                defaultextension=".png",
-                initialfile=default_name,
-                filetypes=[("PNG Image", "*.png"), ("JPEG Image", "*.jpg")],
-                title="Export Spectrogram"
-            )
+        # render the current view of the canvas to a file at HIGH RES
+        S_db, sr = self.analyzer.get_spectrogram_data()
+        
+        if S_db is None:
+            return
             
-            if file_path:
-                original_size = self.figure.get_size_inches()
+        # Default filename from loaded audio
+        default_name = "spectrogram"
+        if self.current_file_path:
+            import os
+            base = os.path.basename(self.current_file_path)
+            name, _ = os.path.splitext(base)
+            default_name = f"{name}_spectrogram"
 
-                try:
-                    # USE SHARED DIMENSIONS
-                    target_w = EXPORT_DIMENSIONS['w']
-                    target_h = EXPORT_DIMENSIONS['h']
-
-                    self.figure.set_size_inches(target_w / 100, target_h / 100)
-                    
-                    # Render to Matplotlib Backend for Export
-                    S_db, sr = self.analyzer.get_spectrogram_data()
-                    self.figure.clear()
-                    self.ax = self.figure.add_subplot(111)
-
-                    y_axis_type = 'log' if self.log_scale_var.get() else 'hz'
-                    
-                    librosa.display.specshow(
-                        S_db, sr=sr, 
-                        hop_length=self.current_hop,
-                        x_axis='time', y_axis=y_axis_type,
-                        ax=self.ax, cmap=self.cmap_var.get(),
-                        rasterized=True
-                    )
-                    
-                    # Apply CURRENT VIEW LIMITS
-                    # Get scroll position (fraction 0.0 to 1.0)
-                    # canvas.xview() returns (start_fraction, end_fraction)
-                    start_frac, end_frac = self.canvas.xview()
-                    
-                    # Calculate time range
-                    start_time = start_frac * self.duration
-                    end_time = end_frac * self.duration
-                    
-                    # Apply to matplotlib axis
-                    self.ax.set_xlim(start_time, end_time)
-                    
-                    if self.hide_axis_var.get():
-                        self.ax.axis('off')
-                    else:
-                        self.ax.axis('on')
-                        self.ax.set_facecolor('black')
-                        self.ax.tick_params(colors='white', labelsize=8)
-                        self.ax.xaxis.label.set_color('white')
-                        self.ax.yaxis.label.set_color('white')
-
-                    # Save the matplotlib figure directly
-                    self.figure.savefig(
-                        file_path,
-                        dpi=100,
-                        facecolor='#1a1a1a', 
-                        bbox_inches='tight', 
-                        pad_inches=0
-                    )
-                    print(f"Saved image to {file_path} ({target_w}x{target_h})")
-                except Exception as e:
-                    print(f"Error saving image: {e}")
-                    import traceback
-                    traceback.print_exc()
-
-                # restore the figure to fit the UI again
-                self.figure.set_size_inches(original_size)
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".png",
+            initialfile=default_name,
+            filetypes=[("PNG Image", "*.png"), ("JPEG Image", "*.jpg")],
+            title="Export High-Res Spectrogram"
+        )
+        
+        if file_path:
+            try:
+                # 1. Define High Resolution Target (e.g., 4K Height)
+                target_height = 2160 
+                
+                # Calculate scale based on current view settings vs 4K
+                # If we just resize the array, we get the whole thing.
+                # Do we want the WHOLE file or just the visible part?
+                # Usually "Export" implies the whole file unless specified.
+                # Let's export the WHOLE file at high res.
+                
+                # Calculate width to maintain aspect ratio with pixels_per_second
+                # Current ratio: 100px/sec at Height=Current
+                # New ratio: scaled_pps at Height=2160
+                
+                # Determine scaling factor relative to a "standard" height (e.g. 720p)
+                # scale = 2160 / 720 = 3x
+                # So pixels_per_second should also be 3x?
+                current_h = 720 
+                scale_factor = target_height / current_h
+                
+                # Effective Width
+                target_width = int((self.duration * self.pixels_per_second) * scale_factor)
+                
+                print(f"Exporting High Res: {target_width}x{target_height} (Scale: {scale_factor:.1f}x)")
+                
+                # 2. Prepare Data (Log Scale / Normalization)
+                data_to_plot = S_db
+                if self.log_scale_var.get():
+                    n_bins, n_frames = S_db.shape
+                    freqs_lin = np.linspace(0, sr/2, n_bins)
+                    freqs_log = np.geomspace(20, sr/2, n_bins)
+                    f = interp1d(freqs_lin, S_db, axis=0, kind='linear', fill_value="extrapolate")
+                    data_to_plot = f(freqs_log)
+                
+                min_db, max_db = -80.0, 0.0
+                norm_data = (data_to_plot - min_db) / (max_db - min_db)
+                norm_data = np.clip(norm_data, 0, 1)
+                norm_data = np.flipud(norm_data)
+                
+                # 3. Apply Colormap
+                cmap = cm.get_cmap(self.cmap_var.get())
+                mapped_data = cmap(norm_data)
+                img_data = (mapped_data * 255).astype(np.uint8)
+                pil_image = Image.fromarray(img_data)
+                
+                # 4. Resize to Target Dimensions
+                # LANCZOS for high quality down/up-scaling
+                export_img = pil_image.resize((target_width, target_height), Image.Resampling.LANCZOS)
+                
+                # 5. Save
+                export_img.save(file_path)
+                print(f"Saved image to {file_path}")
+                
+            except Exception as e:
+                print(f"Error saving image: {e}")
+                import traceback
+                traceback.print_exc()
 
     def run_audio(self):
         if self.current_file_path:

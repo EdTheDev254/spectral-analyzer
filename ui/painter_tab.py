@@ -96,7 +96,7 @@ class PainterTab(ctk.CTkFrame):
                                             command=self.update_labels)
         self.slider_quality.set(16)
         self.slider_quality.pack(pady=5, padx=20)
-
+        
         # Generate Button
         self.btn_convert = ctk.CTkButton(right_frame, text="GENERATE AUDIO", height=50, 
                                          fg_color=COLOR_ACCENT, text_color="black",
@@ -127,9 +127,20 @@ class PainterTab(ctk.CTkFrame):
                                          width=brush_size * 2, fill=COLOR_ACCENT,
                                          capstyle=tk.ROUND, smooth=True)
             
-            # Draw on invisible PIL image (White)
-            self.draw.line([self.last_x, self.last_y, x, y], 
-                           fill=255, width=brush_size * 2, joint="curve")
+            # Draw on internal PIL image scaled
+            # If scale_factor is 0.5 (shown half size), we must multiply coords by 2 (divide by 0.5)
+            # to draw on the big image.
+            
+            sf = getattr(self, 'scale_factor', 1.0)
+            
+            real_lx = self.last_x / sf
+            real_ly = self.last_y / sf
+            real_x = x / sf
+            real_y = y / sf
+            real_width = (brush_size * 2) / sf
+            
+            self.draw.line([real_lx, real_ly, real_x, real_y], 
+                           fill=255, width=int(real_width), joint="curve")
 
         self.last_x = x
         self.last_y = y
@@ -146,36 +157,37 @@ class PainterTab(ctk.CTkFrame):
 
             if file_path:
                 # open the image and convert to grayscale
-                loaded_img = Image.open(file_path).convert('L')
+                # KEEP FULL RESOLUTION loaded_img
+                self.image = Image.open(file_path).convert('L')
+                self.draw = ImageDraw.Draw(self.image)
                 
-                # limit max dimension to 1000px to prevent UI from getting too big
+                # Display Image (Scaled to fit UI)
+                display_img = self.image.copy()
+                self.scale_factor = 1.0
+                
                 max_limit = 1000
-                if loaded_img.width > max_limit or loaded_img.height > max_limit:
-                    loaded_img.thumbnail((max_limit, max_limit), Image.Resampling.LANCZOS)
+                if display_img.width > max_limit or display_img.height > max_limit:
+                    display_img.thumbnail((max_limit, max_limit), Image.Resampling.LANCZOS)
+                    # Calculate scale factor (Display / Original)
+                    self.scale_factor = display_img.width / float(self.image.width)
 
-                
-                w, h = loaded_img.size
+                w, h = display_img.size
 
-                # update canvas dimensions
+                # match canvas to Display size
                 self.canvas_width = w
                 self.canvas_height = h
                 
-                # Shared memory
-                EXPORT_DIMENSIONS['w'] = w
-                EXPORT_DIMENSIONS['h'] = h
+                EXPORT_DIMENSIONS['w'] = self.image.width
+                EXPORT_DIMENSIONS['h'] = self.image.height
                 # ----------------------------########
 
-                # resize the visible tkinter canvas so it fits the image
+                # resize the visible tkinter canvas so it fits the display image
                 self.draw_canvas.configure(width=w, height=h)
                 
-                # update internal logic
-                self.image = loaded_img
-                self.draw = ImageDraw.Draw(self.image)
-                
                 # display on screen
-                self.tk_image_ref = ImageTk.PhotoImage(loaded_img)
+                self.tk_image_ref = ImageTk.PhotoImage(display_img)
                 self.draw_canvas.create_image(0, 0, image=self.tk_image_ref, anchor="nw")
-                self.status_label.configure(text=f"Loaded image: {w}x{h}")
+                self.status_label.configure(text=f"Loaded: {self.image.width}x{self.image.height} (Shown: {w}x{h})")
 
     def clear_canvas(self):
         self.draw_canvas.delete("all")
