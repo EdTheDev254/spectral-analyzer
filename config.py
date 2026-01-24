@@ -1,7 +1,7 @@
 import os
 
 # sample rate for high-quality audio (44.1kHz) 
-SAMPLE_RATE = 44100
+SAMPLE_RATE = 48000
 N_FFT = 2048         # Frequency res
 HOP_LENGTH = 512     # Time res
 HOP_LENGTH_HD = 64 # 4x higher time resolution

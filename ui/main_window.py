@@ -1,7 +1,7 @@
 import customtkinter as ctk
 from ui.painter_tab import PainterTab
 from ui.analyzer_tab import AnalyzerTab
-from ui.overlay_tab import OverlayTab
+#from ui.overlay_tab import OverlayTab
 from config import COLOR_BG
 
 # set the theme globally
@@ -28,7 +28,7 @@ class SpectralStudio(ctk.CTk):
         
         self.tab_paint_ref = self.tabview.add("Spectral Painter")
         self.tab_analyze_ref = self.tabview.add("Spectral Analyzer")
-        self.tab_overlay_ref = self.tabview.add("Canvas Drawer")
+        #self.tab_overlay_ref = self.tabview.add("Canvas Drawer")
         # self.tab_scroll_ref = self.tabview.add("Scrollable View")
         
         # initialize the painter tab script
@@ -40,8 +40,8 @@ class SpectralStudio(ctk.CTk):
         self.analyzer.pack(fill="both", expand=True)
 
         # initialize the overlay tab script
-        self.overlay = OverlayTab(master=self.tab_overlay_ref)
-        self.overlay.pack(fill="both", expand=True)
+        #self.overlay = OverlayTab(master=self.tab_overlay_ref)
+        #self.overlay.pack(fill="both", expand=True)
 
     def on_closing(self):
         # clean up threads or audio streams if needed later

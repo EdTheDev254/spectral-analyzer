@@ -331,7 +331,7 @@ class AnalyzerTab(ctk.CTkFrame):
             import os
             base = os.path.basename(self.current_file_path)
             name, _ = os.path.splitext(base)
-            default_name = f"{name}_spectrogram"
+            default_name = f"{name}_{sr}Hz"
 
         file_path = filedialog.asksaveasfilename(
             defaultextension=".png",
@@ -342,22 +342,10 @@ class AnalyzerTab(ctk.CTkFrame):
         
         if file_path:
             try:
-                # 1. Define High Resolution Target (e.g., 4K Height)
                 target_height = 2160 
-                
-                # Calculate scale based on current view settings vs 4K
-                # If we just resize the array, we get the whole thing.
-                # Do we want the WHOLE file or just the visible part?
-                # Usually "Export" implies the whole file unless specified.
-                # Let's export the WHOLE file at high res.
-                
-                # Calculate width to maintain aspect ratio with pixels_per_second
                 # Current ratio: 100px/sec at Height=Current
                 # New ratio: scaled_pps at Height=2160
-                
-                # Determine scaling factor relative to a "standard" height (e.g. 720p)
-                # scale = 2160 / 720 = 3x
-                # So pixels_per_second should also be 3x?
+                # scale = 2160 / 720 = 3x                  
                 current_h = 720 
                 scale_factor = target_height / current_h
                 
@@ -366,7 +354,7 @@ class AnalyzerTab(ctk.CTkFrame):
                 
                 print(f"Exporting High Res: {target_width}x{target_height} (Scale: {scale_factor:.1f}x)")
                 
-                # 2. Prepare Data (Log Scale / Normalization)
+                #Log Scale / Normalization
                 data_to_plot = S_db
                 if self.log_scale_var.get():
                     n_bins, n_frames = S_db.shape
@@ -380,17 +368,14 @@ class AnalyzerTab(ctk.CTkFrame):
                 norm_data = np.clip(norm_data, 0, 1)
                 norm_data = np.flipud(norm_data)
                 
-                # 3. Apply Colormap
+                # add Colormap
                 cmap = cm.get_cmap(self.cmap_var.get())
                 mapped_data = cmap(norm_data)
                 img_data = (mapped_data * 255).astype(np.uint8)
                 pil_image = Image.fromarray(img_data)
                 
-                # 4. Resize to Target Dimensions
-                # LANCZOS for high quality down/up-scaling
+                # resize - LANCZOS for high quality down/up-scaling
                 export_img = pil_image.resize((target_width, target_height), Image.Resampling.LANCZOS)
-                
-                # 5. Save
                 export_img.save(file_path)
                 print(f"Saved image to {file_path}")
                 

@@ -85,17 +85,36 @@ class PainterTab(ctk.CTkFrame):
         self.lbl_duration = ctk.CTkLabel(right_frame, text="Duration: 3s")
         self.lbl_duration.pack(pady=5)
         self.slider_duration = ctk.CTkSlider(right_frame, from_=1, to=10, number_of_steps=9, 
-                                             command=self.update_labels)
+                                             command=self.on_duration_slider)
         self.slider_duration.set(3.0)
         self.slider_duration.pack(pady=5, padx=20)
+        
+        # Duration Entry
+        self.entry_duration = ctk.CTkEntry(right_frame, width=60, placeholder_text="s")
+        self.entry_duration.insert(0, "3")
+        self.entry_duration.bind("<Return>", self.on_duration_entry)
+        self.entry_duration.pack(pady=2)
+        
+        ctk.CTkLabel(right_frame, text="Sample Rate (Hz):").pack(pady=(10,2))
+        self.entry_samplerate = ctk.CTkEntry(right_frame, width=80)
+        self.entry_samplerate.insert(0, "48000")
+        self.entry_samplerate.pack(pady=2)
 
         # Quality Slider
         self.lbl_quality = ctk.CTkLabel(right_frame, text="Quality: 16 iters")
         self.lbl_quality.pack(pady=5)
         self.slider_quality = ctk.CTkSlider(right_frame, from_=1, to=64, number_of_steps=63, 
-                                            command=self.update_labels)
+                                            command=self.on_quality_slider)
         self.slider_quality.set(16)
         self.slider_quality.pack(pady=5, padx=20)
+        
+        # Pitch Shift Slider
+        self.lbl_pitch = ctk.CTkLabel(right_frame, text="Pitch: 0 semitones")
+        self.lbl_pitch.pack(pady=5)
+        self.slider_pitch = ctk.CTkSlider(right_frame, from_=-12, to=12, number_of_steps=48,
+                                          command=self.on_pitch_slider)
+        self.slider_pitch.set(0)
+        self.slider_pitch.pack(pady=5, padx=20)
         
         # Generate Button
         self.btn_convert = ctk.CTkButton(right_frame, text="GENERATE AUDIO", height=50, 
@@ -188,6 +207,13 @@ class PainterTab(ctk.CTkFrame):
                 self.tk_image_ref = ImageTk.PhotoImage(display_img)
                 self.draw_canvas.create_image(0, 0, image=self.tk_image_ref, anchor="nw")
                 self.status_label.configure(text=f"Loaded: {self.image.width}x{self.image.height} (Shown: {w}x{h})")
+                
+                import re
+                sr_match = re.search(r'_(\d+)Hz', file_path)
+                if sr_match:
+                    sr_value = sr_match.group(1)
+                    self.entry_samplerate.delete(0, "end")
+                    self.entry_samplerate.insert(0, sr_value)
 
     def clear_canvas(self):
         self.draw_canvas.delete("all")
@@ -209,11 +235,31 @@ class PainterTab(ctk.CTkFrame):
         self.btn_play.configure(state="disabled")
         self.status_label.configure(text="Canvas cleared")
 
-    def update_labels(self, value):
+    def on_duration_slider(self, value):
         d = int(self.slider_duration.get())
-        q = int(self.slider_quality.get())
         self.lbl_duration.configure(text=f"Duration: {d}s")
+        self.entry_duration.delete(0, "end")
+        self.entry_duration.insert(0, str(d))
+    
+    def on_quality_slider(self, value):
+        q = int(self.slider_quality.get())
         self.lbl_quality.configure(text=f"Quality: {q} iters")
+    
+    def on_pitch_slider(self, value):
+        p = self.slider_pitch.get()
+        self.lbl_pitch.configure(text=f"Pitch: {p:.1f} semitones")
+    
+    def on_duration_entry(self, event):
+        try:
+            value = float(self.entry_duration.get())
+            if value > 0:
+                # Only update slider if value is within range
+                if 1 <= value <= 10:
+                    self.slider_duration.set(value)
+                # Always update the label
+                self.lbl_duration.configure(text=f"Duration: {int(value)}s")
+        except ValueError:
+            pass
 
     # logic for the sound
     def start_generation(self):
@@ -235,16 +281,27 @@ class PainterTab(ctk.CTkFrame):
         self.btn_convert.configure(state="disabled", text="Computing...")
         self.status_label.configure(text="Generating audio...")
         
-        duration = int(self.slider_duration.get())
-        iterations = int(self.slider_quality.get())
+        # Read duration from entry field (allows values beyond slider range)
+        try:
+            duration = int(float(self.entry_duration.get()))
+        except ValueError:
+            duration = int(self.slider_duration.get())
         
-        thread = threading.Thread(target=self.run_generation, args=(duration, iterations, file_path))
+        try:
+            sample_rate = int(self.entry_samplerate.get())
+        except ValueError:
+            sample_rate = 48000
+        
+        iterations = int(self.slider_quality.get())
+        pitch_shift = self.slider_pitch.get()
+        
+        thread = threading.Thread(target=self.run_generation, args=(duration, iterations, file_path, pitch_shift, sample_rate))
         thread.start()
 
-    def run_generation(self, duration, iterations, output_path):
+    def run_generation(self, duration, iterations, output_path, pitch_shift, sample_rate):
         # Call the backend generator
         # We pass self.image, which is the Pillow object we drew on
-        filename, _ = self.generator.generate_from_image(self.image, duration, iterations, output_path)
+        filename, _ = self.generator.generate_from_image(self.image, duration, iterations, output_path, pitch_shift, sample_rate)
         
         self.after(0, self.finish_generation, filename)
 
