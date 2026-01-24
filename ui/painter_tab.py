@@ -214,6 +214,16 @@ class PainterTab(ctk.CTkFrame):
                     sr_value = sr_match.group(1)
                     self.entry_samplerate.delete(0, "end")
                     self.entry_samplerate.insert(0, sr_value)
+                
+                dur_match = re.search(r'_([\d.]+)s', file_path)
+                if dur_match:
+                    dur_value = dur_match.group(1)
+                    self.entry_duration.delete(0, "end")
+                    self.entry_duration.insert(0, dur_value)
+                    dur_float = float(dur_value)
+                    if 1 <= dur_float <= 10:
+                        self.slider_duration.set(dur_float)
+                    self.lbl_duration.configure(text=f"Duration: {dur_value}s")
 
     def clear_canvas(self):
         self.draw_canvas.delete("all")
@@ -257,7 +267,7 @@ class PainterTab(ctk.CTkFrame):
                 if 1 <= value <= 10:
                     self.slider_duration.set(value)
                 # Always update the label
-                self.lbl_duration.configure(text=f"Duration: {int(value)}s")
+                self.lbl_duration.configure(text=f"Duration: {value}s")
         except ValueError:
             pass
 
@@ -283,7 +293,7 @@ class PainterTab(ctk.CTkFrame):
         
         # Read duration from entry field (allows values beyond slider range)
         try:
-            duration = int(float(self.entry_duration.get()))
+            duration = float(self.entry_duration.get())
         except ValueError:
             duration = int(self.slider_duration.get())
         
@@ -328,5 +338,3 @@ class PainterTab(ctk.CTkFrame):
 #         # simple label for testing
 #         self.lbl = ctk.CTkLabel(self, text="Painter Tab (In development)", font=("Arial", 20))
 #         self.lbl.pack(pady=40)
-
-

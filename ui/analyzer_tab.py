@@ -331,7 +331,7 @@ class AnalyzerTab(ctk.CTkFrame):
             import os
             base = os.path.basename(self.current_file_path)
             name, _ = os.path.splitext(base)
-            default_name = f"{name}_{sr}Hz"
+            default_name = f"{name}_{sr}Hz_{self.duration:.1f}s"
 
         file_path = filedialog.asksaveasfilename(
             defaultextension=".png",
